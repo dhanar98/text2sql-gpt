@@ -11,7 +11,6 @@ class ChatGPTController extends Controller
 {
     use DatabaseTrait;
 
-
     public function welcome()
     {
         try {
@@ -19,36 +18,37 @@ class ChatGPTController extends Controller
             if (count($fetchedDbTableNames) === 0) {
                 return view('error');
             }
+
             return view('welcome', ['fetchedDbTableNames' => $fetchedDbTableNames]);
         } catch (\Exception $e) {
             Log::error("Welcome Page ====> {$e->getMessage()}");
         }
     }
 
-
-    public function sqlCreateStatementFromDb(Request $request) 
+    public function sqlCreateStatementFromDb(Request $request)
     {
         try {
-           
+
             $tableName = $request->input('tableName');
             $tableSchema = $this->getCreateSqlStatement($tableName);
 
             Log::debug("translatedTextToSQL ===> {$tableSchema}");
 
-            $result =  new stdClass;
-            $result->fetchedSqlStatement =  $tableSchema ?  $tableSchema : '';
+            $result = new stdClass;
+            $result->fetchedSqlStatement = $tableSchema ? $tableSchema : '';
 
             return response()->json([
                 'status' => 'SUCCESS',
-                'data'   => $result,
-                'message' => 'CREATED QUERY ADDED.'
+                'data' => $result,
+                'message' => 'CREATED QUERY ADDED.',
             ]);
         } catch (\Exception $e) {
             Log::error("sqlCreateStatementFromDb ===> {$e->getMessage()} ");
+
             return response()->json([
                 'status' => 'ERROR',
                 'data' => [],
-                'message' => 'database error'
+                'message' => 'database error',
             ], 400);
         }
     }
@@ -59,22 +59,21 @@ class ChatGPTController extends Controller
 
             $humanPrompt = $request->input('humanPrompt');
             $createSqlStatement = $request->input('createSqlStatement');
-    
+
             Log::debug("Human Prompt: {$humanPrompt}");
             Log::debug("Create SQL Statement: {$createSqlStatement}");
-    
+
             $translatedTextToSQL = $this->translateToSQL($humanPrompt, $createSqlStatement);
             Log::debug("translatedTextToSQL ===> {$translatedTextToSQL}");
 
-            $result =  new stdClass;
-            $result->translatedTextToSQL =  $translatedTextToSQL ?  $translatedTextToSQL : '';
+            $result = new stdClass;
+            $result->translatedTextToSQL = $translatedTextToSQL ? $translatedTextToSQL : '';
 
             return response()->json([
                 'status' => 'SUCCESS',
-                'data'   => $result,
-                'message' => 'Text Converted To SQL'
+                'data' => $result,
+                'message' => 'Text Converted To SQL',
             ], 200);
-
 
         } catch (\Exception $e) {
             Log::error("sqlQueryFromChatGpt ===> {$e->getMessage()}");
@@ -83,29 +82,29 @@ class ChatGPTController extends Controller
             if ($e instanceof \GuzzleHttp\Exception\ClientException && $e->getCode() == 429) {
                 return response()->json([
                     'status' => 'error',
-                    'data'   => [],
-                    'message' => 'Too Many Requests. Please try again later.'
+                    'data' => [],
+                    'message' => 'Too Many Requests. Please try again later.',
                 ], 429);
             }
-    
+
             return response()->json([
                 'status' => 'ERROR',
                 'data' => [],
-                'message' => 'chatgpt error'
+                'message' => 'chatgpt error',
             ], 400);
         }
     }
 
-    private function translateToSQL(string $query, string | null  $tableSchema = "")
+    private function translateToSQL(string $query, ?string $tableSchema = '')
     {
 
-        $prompt = "Translate this natural language query into SQL without changing the case of the entries given by me:\n\n\"$query\"\n\n" . ($tableSchema ? "Use this table schema:\n\n$tableSchema\n\n" : '') . "SQL Query:";
+        $prompt = "Translate this natural language query into SQL without changing the case of the entries given by me:\n\n\"$query\"\n\n".($tableSchema ? "Use this table schema:\n\n$tableSchema\n\n" : '').'SQL Query:';
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $response = $client->post('https://api.openai.com/v1/completions', [
             'headers' => [
                 'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . config('chatgpt.chatgpt_api_key'),
+                'Authorization' => 'Bearer '.config('chatgpt.chatgpt_api_key'),
             ],
             'json' => [
                 'prompt' => $prompt,
@@ -122,7 +121,7 @@ class ChatGPTController extends Controller
 
         $data = json_decode($response->getBody(), true);
 
-        Log::debug('RESPONSE FROM CHATGPT ======> ' . json_encode($data, 128));
+        Log::debug('RESPONSE FROM CHATGPT ======> '.json_encode($data, 128));
 
         if ($response->getStatusCode() !== 200) {
             throw new \Exception($data['error'] ?? 'Error translating to SQL.');
