@@ -52,7 +52,7 @@ trait DatabaseTrait
         return $tableNames ? $tableNames : [];
     }
 
-    public function getCreateSqlStatement(string | array $tableName) : string  {
+    public function getCreateSqlStatement(string $tableName) : string  {
         try {
 
             $connection = config('database.default');
@@ -65,7 +65,7 @@ trait DatabaseTrait
     
                 case 'pgsql':
                     $createStatementQuery = DB::select("SELECT generate_create_table_statement(:table_name) as create_statement", ['table_name' => $tableName]);
-                    dd($createStatementQuery);
+                    $createStatementResult = $createStatementQuery[0]->create_statement;
                     break;
     
                 default:

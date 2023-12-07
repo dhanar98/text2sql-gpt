@@ -16,3 +16,5 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', [ChatGPTController::class, 'welcome']);
+Route::post('getsqlstatement', [ChatGPTController::class, 'sqlQueryFromChatGpt'])->name('getsqlstatement');
+Route::get('getcreatestatement', [ChatGPTController::class, 'sqlCreateStatementFromDb'])->name('getcreatestatement');
