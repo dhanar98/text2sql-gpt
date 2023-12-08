@@ -63,6 +63,14 @@ class ChatGPTController extends Controller
             Log::debug("Human Prompt: {$humanPrompt}");
             Log::debug("Create SQL Statement: {$createSqlStatement}");
 
+            if (is_null($humanPrompt)) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'data' => [],
+                    'message' => 'Human Prompt Needed',
+                ], 422);
+            }
+
             $translatedTextToSQL = $this->translateToSQL($humanPrompt, $createSqlStatement);
             Log::debug("translatedTextToSQL ===> {$translatedTextToSQL}");
 
@@ -81,7 +89,7 @@ class ChatGPTController extends Controller
             // Check if the exception is a 429 Too Many Requests error
             if ($e instanceof \GuzzleHttp\Exception\ClientException && $e->getCode() == 429) {
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'ERROR',
                     'data' => [],
                     'message' => 'Too Many Requests. Please try again later.',
                 ], 429);
